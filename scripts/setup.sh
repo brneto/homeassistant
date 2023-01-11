@@ -14,4 +14,10 @@ then
   (cd /opt/homeassistant/config && wget -O - https://get.hacs.xyz | bash -)
 fi
 
-echo "$(hostname): It is required to restart the homeassistant container for this changes take effect!"
+for i in $(docker ps | awk 'NR>1 {print $(NF)}')
+do
+  [ "homeassistant" = "$i" ] && docker restart "$i"
+done
+
+
+sleep 240

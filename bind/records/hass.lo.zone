@@ -10,9 +10,9 @@ $TTL    1d ; default expiration time (in seconds) of all RRs without their own T
 ; nameserver (NS) Resource Record (RR) for the domain
         IN      NS      ns.hass.lo.
 ; IPv4 address of the base-domain
-        IN      A       192.168.8.101
+        IN      A       192.168.8.100
 ; IPv4 of the in-zone nameserver for the domain
-ns      IN      A       192.168.8.101
+ns      IN      A       192.168.8.100
 
 ; alias (canonical name) to the base-domain
 www             IN      CNAME   @

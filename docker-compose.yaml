@@ -177,18 +177,27 @@ services:
       - 172.18.0.2
     
   system_setup:
-    image: bash:latest
+    image: docker:latest
     container_name: system-setup
-    init: true
     depends_on:
       - portainer
       - homeassistant
     restart: "no"
+    healthcheck:
+      test: grep bash /etc/shells || exit 1
+      interval: 1s
+      timeout: 1s
+      retries: 3
+      start_period: 3s
+    init: true
     working_dir: /homeassistant
     hostname: system-setup
     command:
-      - "scripts/setup.sh"
+      - ash
+      - -c
+      - scripts/init.sh && scripts/setup.sh
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - /etc/localtime:/etc/localtime:ro
       - ./scripts:/homeassistant/scripts
       - ./config:/homeassistant/config
