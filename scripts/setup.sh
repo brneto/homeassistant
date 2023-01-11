@@ -18,6 +18,3 @@ for i in $(docker ps | awk 'NR>1 {print $(NF)}')
 do
   [ "homeassistant" = "$i" ] && docker restart "$i"
 done
-
-
-sleep 240
