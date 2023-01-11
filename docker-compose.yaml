@@ -1,0 +1,206 @@
+version: "3.8"
+
+services:
+  dnss:
+    image: ubuntu/bind9:latest
+    container_name: dnss
+    restart: unless-stopped
+    hostname: dnss
+    environment:
+      - BIND9_USER=bind
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./bind/config:/etc/bind
+      - ./bind/cache:/var/cache/bind
+      - ./bind/records:/var/lib/bind
+    networks:
+      hass_net:
+        ipv4_address: 172.18.0.2
+    ports:
+      - "53:53/udp"
+  
+  # https://doc.traefik.io/traefik/routing/providers/docker/#configuration-examples
+  ingress:
+    # Official v2 Traefik docker image
+    image: traefik:banon
+    container_name: ingress
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker
+    depends_on:
+      - dnss
+    restart: unless-stopped
+    hostname: ingress
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: 
+      - hass_net
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    labels:
+      - traefik.http.routers.portainer.rule=Host(`portainer.hass.lo`)
+      - traefik.http.services.portainer.loadbalancer.server.port=9000
+    container_name: portainer
+    depends_on:
+      - ingress
+    restart: unless-stopped
+    hostname: portainer
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/portainer:/data
+    networks:
+      - hass_net
+      
+  duplicati:
+    image: lscr.io/linuxserver/duplicati:latest
+    labels:
+      - traefik.http.routers.duplicati.rule=Host(`duplicati.hass.lo`)
+      - traefik.http.services.duplicati.loadbalancer.server.port=8200
+    container_name: duplicati
+    depends_on:
+      - ingress
+    restart: unless-stopped
+    hostname: duplicati
+    environment:
+      - PUID=${USER_ID:?Set Duplicati volume user.}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /opt/duplicati/config:/config
+      - /opt/duplicati/backups:/backups
+      - /opt:/source
+    networks:
+      - hass_net
+
+  influxdb:
+    image: influxdb:1.8
+    labels:
+      - traefik.http.routers.influxdb.rule=Host(`influxdb.hass.lo`)
+      - traefik.http.services.influxdb.loadbalancer.server.port=8888
+    container_name: influxdb
+    depends_on:
+      - ingress
+    restart: unless-stopped
+    hostname: influxdb
+    volumes:
+      - /opt/influxdb:/var/lib/influxdb
+    networks:
+      - hass_net
+    ports:
+      - "8086:8086"
+  chronograf:
+    image: chronograf:1.8.4
+    container_name: chronograf
+    command:
+      - --influxdb-url=http://localhost:8086
+    volumes:
+      - /opt/chronograf:/var/lib/chronograf
+    restart: unless-stopped
+    network_mode: service:influxdb
+
+  grafana:
+    image: grafana/grafana:latest
+    labels:
+      - traefik.http.routers.grafana.rule=Host(`grafana.hass.lo`)
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+    user: ${USER_ID:?Set Grafana admin user.}
+    container_name: grafana
+    depends_on:
+      - ingress
+      - influxdb
+    restart: unless-stopped
+    hostname: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Home
+      - GF_AUTH_LDAP_ENABLED=false
+      - GF_AUTH_PROXY_ENABLED=true
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - /opt/grafana:/var/lib/grafana
+    networks:
+      - hass_net
+
+  mariadb:
+    image: mariadb:latest
+    labels:
+      - traefik.http.routers.mariadb.rule=Host(`mariadb.hass.lo`)
+      - traefik.http.services.mariadb.loadbalancer.server.port=8080
+    container_name: mariadb
+    depends_on:
+      - ingress
+    restart: unless-stopped
+    hostname: mariadb
+    environment:
+      - MARIADB_DATABASE=${DB_NAME:?Set Home Assistant database name.}
+      - MARIADB_USER=${DB_USER:?Set Home Assistant database user.}
+      - MARIADB_PASSWORD=${DB_PASSWORD:?Set Home Assistant database password.}
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD:?Set Home Assistant database root password.}
+    volumes:
+      - /opt/mariadb:/var/lib/mysql
+    networks: 
+      - hass_net
+    ports:
+      - "3306:3306"
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: unless-stopped
+    network_mode: service:mariadb
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    labels:
+      - traefik.http.routers.homeassistant.rule=HostRegexp(`{subdomain:(?:www\.)?}hass.lo`)
+      - traefik.http.services.homeassistant.loadbalancer.server.port=8123
+    container_name: homeassistant
+    user: ${USER_ID:?Set Home Assistant container user.}
+    privileged: true
+    depends_on:
+      - ingress
+      - mariadb
+      - grafana
+    restart: unless-stopped
+    hostname: homeassistant
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${HA_CONFIG:-/opt/homeassistant/config}:/config
+    networks:
+      - hass_net
+    dns:
+      - 172.18.0.2
+    
+  system_setup:
+    image: bash:latest
+    container_name: system-setup
+    init: true
+    depends_on:
+      - portainer
+      - homeassistant
+    restart: "no"
+    working_dir: /homeassistant
+    hostname: system-setup
+    command:
+      - "scripts/setup.sh"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./scripts:/homeassistant/scripts
+      - ./config:/homeassistant/config
+      - ${HA_CONFIG:-/opt/homeassistant/config}:/opt/homeassistant/config
+    networks:
+      - hass_net
+      
+networks:
+  hass_net:
+    name: hass
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/24
+          gateway: 172.18.0.1

@@ -1,0 +1,103 @@
+# Loads default set of integrations. Do not remove.
+# default_config:
+#backup:
+bluetooth:
+config:
+counter:
+#dhcp:
+#energy:
+hardware:
+history:
+homeassistant_alerts:
+#cloud:
+image_upload:
+input_boolean:
+input_button:
+input_datetime:
+input_number:
+input_select:
+input_text:
+logbook:
+logger:
+#map:
+#media_source:
+mobile_app:
+my:
+#person:
+schedule:
+#ssdp:
+stream:
+sun:
+system_health:
+tag:
+timer:
+usb:
+webhook:
+#zeroconf:
+zone:
+
+
+# Home Assistant Databases
+recorder:
+  db_url: !secret mariadb
+
+influxdb:
+  host: influxdb.hass.lo
+  port: 8086
+  database: homeassistant
+  username: homeassistant
+  password: !secret influxdb
+  max_retries: 3
+  default_measurement: state
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.18.0.3     # Ingress IP address
+  ip_ban_enabled: true
+  login_attempts_threshold: 5
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# System Monitor entries
+sensor:
+  - platform: systemmonitor
+    resources:
+      - type: disk_free
+      - type: disk_use
+      - type: disk_use_percent
+      - type: memory_free
+      - type: memory_use
+      - type: memory_use_percent
+      - type: processor_use
+
+panel_iframe:
+  portainer:
+    title: "Portainer"
+    url: "http://portainer.hass.lo/#!/2/docker/containers"
+    icon: mdi:docker
+    require_admin: true
+  duplicati:
+    title: "Duplicati"
+    url: "http://duplicati.hass.lo/ngax/index.html"
+    icon: mdi:backup-restore
+    require_admin: true
+  influxdb:
+    title: "InfluxDB"
+    url: "http://influxdb.hass.lo/sources/0/admin-influxdb/databases"
+    icon: mdi:chart-areaspline
+    require_admin: true
+  grafana:
+    title: "Grafana"
+    url: "http://grafana.hass.lo"
+    icon: mdi:chart-timeline

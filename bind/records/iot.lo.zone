@@ -1,0 +1,22 @@
+$TTL    1d ; default expiration time (in seconds) of all RRs without their own TTL value
+
+; Start Of Authority (SOA) Resource Record (RR) defining the key characteristics of the zone (domain)
+@       IN      SOA     ns.iot.lo. hostmaster.iot.lo. (
+                  3      ; Serial
+                  1d     ; Refresh
+                  1h     ; Retry
+                  1w     ; Expire
+                  1h )   ; Negative Cache TTL
+; nameserver (NS) Resource Record (RR) for the domain
+        IN      NS      ns.iot.lo.
+; IPv4 address of the base-domain
+        IN      A       172.18.0.10
+; IPv4 of the in-zone nameserver for the domain
+ns      IN      A       172.18.0.10
+
+; alias (canonical name) to the base-domain
+www     IN      CNAME   @
+
+; hosts Resource Record (RR) in this domain
+device1     IN      A       172.18.0.11
+*.device    IN      A       172.18.0.12
