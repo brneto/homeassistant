@@ -167,6 +167,12 @@ services:
       - mariadb
       - grafana
     restart: unless-stopped
+    healthcheck:
+      test: curl -f http://localhost:8123 || exit 1
+      start_period: 10s
+      interval: 1s
+      timeout: 1s
+      retries: 3
     hostname: homeassistant
     tmpfs:
       - /.config
@@ -188,10 +194,10 @@ services:
     restart: "no"
     healthcheck:
       test: grep bash /etc/shells || exit 1
+      start_period: 3s
       interval: 1s
       timeout: 1s
       retries: 3
-      start_period: 3s
     init: true
     working_dir: /homeassistant
     hostname: system-setup
