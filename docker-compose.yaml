@@ -17,6 +17,7 @@ services:
       hass_net:
         ipv4_address: 172.18.0.2
     ports:
+      - "53:53/tcp"
       - "53:53/udp"
   
   # https://doc.traefik.io/traefik/routing/providers/docker/#configuration-examples
