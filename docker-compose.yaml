@@ -16,6 +16,8 @@ services:
     networks:
       hass_net:
         ipv4_address: 172.18.0.2
+    dns:
+      - 127.0.0.1
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -25,12 +27,15 @@ services:
     container_name: pihole
     image: pihole/pihole:latest
     labels:
-      - traefik.http.routers.pihole.rule=Host(`192.168.8.100`)
+      - traefik.http.routers.pihole.rule=Host(`192.168.8.100`,`pi.hole`)
       - traefik.http.services.pihole.loadbalancer.server.port=80
     restart: unless-stopped
-    hostname: pihole
+    hostname: pi.hole
     environment:
       - WEBPASSWORD=admin
+      - VIRTUAL_HOST="pi.hole"
+      - PROXY_LOCATION="172.18.0.3"
+      - FTLCONF_LOCAL_IPV4="172.18.0.2"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /opt/homeassistant/pihole:/etc/pihole
@@ -41,6 +46,8 @@ services:
         ipv4_address: 172.18.0.2
     # cap_add:
     #   - NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
+    dns:
+      - 172.18.0.2
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -64,8 +71,9 @@ services:
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
-    networks: 
-      - hass_net
+    networks:
+      hass_net:
+        ipv4_address: 172.18.0.3
     ports:
       - "80:80"
 
