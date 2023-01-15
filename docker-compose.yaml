@@ -30,10 +30,9 @@ services:
       - traefik.http.routers.pihole.rule=Host(`192.168.8.100`,`pi.hole`)
       - traefik.http.services.pihole.loadbalancer.server.port=80
     restart: unless-stopped
-    hostname: pi.hole
+    hostname: pihole
     environment:
       - WEBPASSWORD=admin
-      - VIRTUAL_HOST="pi.hole"
       - PROXY_LOCATION="172.18.0.3"
       - FTLCONF_LOCAL_IPV4="172.18.0.2"
     volumes:
