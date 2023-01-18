@@ -1,0 +1,18 @@
+---
+- name: Template docker-compose file
+  tags: docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: ./docker-compose.yaml
+    owner: "{{ username }}"
+    group: "{{ groupname }}"
+    mode: 0644
+
+- name: Copy initial config file for Home Assistant
+  tags: homeassistant,config
+  ansible.builtin.copy:
+    src: configuration.yaml
+    dest: /opt/homeassistant/core/config/
+    owner: "{{ username }}"
+    group: "{{ groupname }}"
+    mode: 0644
