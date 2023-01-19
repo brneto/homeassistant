@@ -38,10 +38,10 @@
   when: docker_version.rc != 0
 
 - name: Copy multiple files
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: /path/to/destination/
-  with_items:
+  loop:
     - /path/to/local/file1
     - /path/to/local/file2
     - /path/to/local/file3
