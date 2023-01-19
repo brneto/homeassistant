@@ -16,3 +16,38 @@
     owner: "{{ username }}"
     group: "{{ groupname }}"
     mode: 0644
+
+- name: Check if Docker Compose plugin is installed
+  command: docker plugin ls --filter name=docker/compose
+  register: compose_plugin
+  ignore_errors: true
+
+- name: Install Docker Compose plugin
+  command: docker plugin install --alias compose docker/compose:latest
+  when: compose_plugin.stdout == ""
+
+- name: Check if Docker is installed
+  command: docker --version
+  register: docker_version
+  ignore_errors: true
+
+- name: Install Docker
+  package:
+    name: docker-ce
+    state: present
+  when: docker_version.rc != 0
+
+- name: Copy multiple files
+  copy:
+    src: "{{ item }}"
+    dest: /path/to/destination/
+  with_items:
+    - /path/to/local/file1
+    - /path/to/local/file2
+    - /path/to/local/file3
+
+- name: Copy multiple files
+  copy:
+    src: "/path/to/local/*.txt"
+    dest: /path/to/destination/
+
