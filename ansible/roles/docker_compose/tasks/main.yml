@@ -1,9 +1,11 @@
 ---
 - name: Check if Docker is already installed
+  tags: docker
   command: docker --version
   register: docker_version
 
 - name: Install Docker
+  tags: docker
   ansible.builtin.package:
     name:
       - docker-ce
@@ -13,10 +15,12 @@
   when: docker_version.rc != 0
 
 - name: Check if Docker Compose plugin is installed
+  tags: docker, docker-compose
   command: docker compose version
   register: compose_version
 
 - name: Install Docker Compose plugin
+  tags: docker, docker-compose
   ansible.builtin.package:
     name: docker-compose-plugin
     state: latest

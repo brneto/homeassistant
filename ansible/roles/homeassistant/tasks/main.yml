@@ -1,6 +1,6 @@
 ---
 - name: Template docker-compose file
-  tags: docker-compose
+  tags: docker-compose, homeassistant
   ansible.builtin.template:
     src: docker-compose.yaml.j2
     dest: "{{ ha.base_path }}/docker-compose.yaml"
@@ -8,16 +8,19 @@
     mode: '0644'
 
 - name: Start Home Assistant containers
+  tags: docker-compose
   ansible.builtin.command: "docker compose -f {{ ha.base_path }}/docker-compose.yaml up -d"
   register: ha_started
   changed_when: ha_started.rc == 0
 
 - name: Wait for directory to be created in container
+  tags: docker-compose, homeassistant
   ansible.builtin.wait_for:
     path: "{{ ha.config_path }}/.storage"
     state: present
 
 - name: Template Home Assistant secrets
+  tags: homeassistant
   ansible.builtin.template:
     src: secrets.yaml.j2
     dest: "{{ ha.config_path }}/secrets.yaml"
@@ -25,6 +28,7 @@
     mode: '0644'
 
 - name: Copy initial Home Assistant config file
+  tags: homeassistant
   ansible.builtin.copy:
     src: configuration.yaml
     dest: "{{ ha.config_path }}"
@@ -32,6 +36,7 @@
     mode: '0644'
 
 - name: Try install HACS addon
+  tags: homeassistant, hacs
   block:
     - name: Install HACS addon
       ansible.builtin.shell:
