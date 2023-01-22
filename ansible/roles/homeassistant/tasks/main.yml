@@ -38,9 +38,16 @@
 - name: Try install HACS addon
   tags: homeassistant, hacs
   block:
+    - name: Download HACS installer 
+      ansible.builtin.uri:
+        url: https://get.hacs.xyz
+        return_content: yes
+      register: hacs_installer
+      
     - name: Install HACS addon
-      ansible.builtin.shell:
-        cmd: wget -O - https://get.hacs.xyz | bash -
+      ansible.builtin.command:
+        cmd: "bash -"
+        stdin: "{{ hacs_installer.content }}"
         chdir: "{{ ha.config_path }}"
         creates: "{{ ha.config_path }}/custom_components/hacs"
       notify:

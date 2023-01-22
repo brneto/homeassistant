@@ -1,0 +1,24 @@
+$TTL    1d ; default expiration time (in seconds) of all RRs without their own TTL value
+
+; Start Of Authority (SOA) Resource Record (RR) defining the key characteristics of the zone (domain)
+@       IN      SOA     ns.hass.lo. hostmaster.hass.lo. (
+                  3      ; Serial
+                  1d     ; Refresh
+                  1h     ; Retry
+                  1w     ; Expire
+                  1h )   ; Negative Cache TTL
+; nameserver (NS) Resource Record (RR) for the domain
+        IN      NS      ns.hass.lo.
+; IPv4 address of the base-domain
+        IN      A       192.168.8.100
+; IPv4 of the in-zone nameserver for the domain
+ns      IN      A       192.168.8.100
+
+; alias (canonical name) to the base-domain
+www             IN      CNAME   @
+traefik         IN      CNAME   @
+portainer       IN      CNAME   @
+duplicati       IN      CNAME   @
+influxdb        IN      CNAME   @
+grafana         IN      CNAME   @
+mariadb         IN      CNAME   @

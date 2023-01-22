@@ -1,0 +1,7 @@
+---
+user:
+  id: "1000"
+dns:
+  base_path: "/opt/homeassistant"
+  bind_path: "{{ dns.base_path }}/bind"
+  dnsmasq_path: "{{ dns.base_path }}/bind"
