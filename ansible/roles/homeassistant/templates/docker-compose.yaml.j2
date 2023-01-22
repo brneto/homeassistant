@@ -104,7 +104,7 @@ services:
     restart: unless-stopped
     hostname: duplicati
     environment:
-      - PUID=${UID:?Set Duplicati volume user.}
+      - PUID={{ userid }}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /opt/homeassistant/duplicati/config:/config
@@ -145,7 +145,7 @@ services:
     labels:
       - traefik.http.routers.grafana.rule=Host(`grafana.hass.lo`)
       - traefik.http.services.grafana.loadbalancer.server.port=3000
-    user: ${UID:?Set Grafana admin user.}
+    user: {{ userid }}
     depends_on:
       - ingress
       - influxdb
@@ -173,10 +173,10 @@ services:
     restart: unless-stopped
     hostname: mariadb
     environment:
-      - MARIADB_DATABASE=${DB_NAME:?Set Home Assistant database name.}
-      - MARIADB_USER=${DB_USER:?Set Home Assistant database user.}
-      - MARIADB_PASSWORD=${DB_PASSWORD:?Set Home Assistant database password.}
-      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD:?Set Home Assistant database root password.}
+      - MARIADB_DATABASE={{ db.name }}
+      - MARIADB_USER={{ db.user }}
+      - MARIADB_PASSWORD={{ db.password }}
+      - MARIADB_ROOT_PASSWORD={{ db.root_password }}
     volumes:
       - /opt/homeassistant/mariadb:/var/lib/mysql
     networks: 
@@ -195,7 +195,7 @@ services:
     labels:
       - traefik.http.routers.homeassistant.rule=HostRegexp(`{subdomain:(?:www\.)?}hass.lo`)
       - traefik.http.services.homeassistant.loadbalancer.server.port=8123
-    user: ${UID:?Set Home Assistant container user.}
+    user: {{ userid }}
     privileged: true
     depends_on:
       - ingress
@@ -214,42 +214,11 @@ services:
       - /.cache
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ${HA_CONFIG:-/opt/homeassistant/core/config}:/config
+      - {{ ha.config_path }}:/config
     networks:
       - hass_net
     dns:
       - 172.18.0.2
-    
-  system_setup:
-    container_name: system-setup
-    image: docker:latest
-    depends_on:
-      - portainer
-      - homeassistant
-    restart: "no"
-    healthcheck:
-      test: grep bash /etc/shells || exit 1
-      start_period: 3s
-      interval: 1s
-      timeout: 1s
-      retries: 3
-    init: true
-    working_dir: /homeassistant
-    hostname: system-setup
-    environment:
-      - UID=${UID:?Set System Setup script user.}
-    command:
-      - ash
-      - -c
-      - scripts/init.sh && scripts/setup.sh
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /etc/localtime:/etc/localtime:ro
-      - ./scripts:/homeassistant/scripts
-      - ./config:/homeassistant/config
-      - ${HA_CONFIG:-/opt/homeassistant/core/config}:/opt/homeassistant/config
-    networks:
-      - hass_net
       
 networks:
   hass_net:

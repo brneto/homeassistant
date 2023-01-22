@@ -3,51 +3,57 @@
   tags: docker-compose
   ansible.builtin.template:
     src: docker-compose.yaml.j2
-    dest: ./docker-compose.yaml
-    owner: "{{ username }}"
-    group: "{{ groupname }}"
-    mode: 0644
+    dest: "{{ ha.base_path }}/docker-compose.yaml"
+    owner: "{{ userid }}"
+    mode: '0644'
+
+- name: Start docker compose containers
+  ansible.builtin.command: "docker compose -f {{ ha.base_path }}/docker-compose.yaml up -d"
+
+- name: Wait for directory to be created in container
+  ansible.builtin.wait_for:
+    path: "{{ ha.config_path }}"
+    state: present
+    timeout: 300
+    check_with: "ls {{ ha.config_path }}/.storage"
+  register: directory_exits
+
+- name: Debug output
+  ansible.builtin.debug:
+    var: directory_exists
+
+- name: Check if directory exists
+  ansible.builtin.assert:
+    that: directory_exists.stdout != ""
+
+- name: Template Home Assistant secrets
+  ansible.builtin.template:
+    src: secrets.yaml.j2
+    dest: "{{ ha.config_path }}/secrets.yaml"
+    owner: "{{ userid }}"
+    mode: '0644'
 
 - name: Copy initial config file for Home Assistant
-  tags: homeassistant,config
-  ansible.builtin.copy:
-    src: configuration.yaml
-    dest: /opt/homeassistant/core/config/
-    owner: "{{ username }}"
-    group: "{{ groupname }}"
-    mode: 0644
-
-- name: Check if Docker Compose plugin is installed
-  command: docker plugin ls --filter name=docker/compose
-  register: compose_plugin
-  ignore_errors: true
-
-- name: Install Docker Compose plugin
-  command: docker plugin install --alias compose docker/compose:latest
-  when: compose_plugin.stdout == ""
-
-- name: Check if Docker is installed
-  command: docker --version
-  register: docker_version
-  ignore_errors: true
-
-- name: Install Docker
-  package:
-    name: docker-ce
-    state: present
-  when: docker_version.rc != 0
-
-- name: Copy multiple files
   ansible.builtin.copy:
     src: "{{ item }}"
-    dest: /path/to/destination/
+    dest: "{{ ha.config_path }}"
+    owner: "{{ userid }}"
+    mode: '0644'
   loop:
-    - /path/to/local/file1
-    - /path/to/local/file2
-    - /path/to/local/file3
+    - configuration.yaml
 
-- name: Copy multiple files
-  copy:
-    src: "/path/to/local/*.txt"
-    dest: /path/to/destination/
+- name: Install HACS addon and restart container
+  block:
+    - name: Install HACS addon
+      ansible.builtin.command:
+        cmd: "cd /opt/homeassistant/config && wget -O - https://get.hacs.xyz | bash -"
+        creates: "{{ ha.config_path }}/custom_components/hacs"
+      register: hacs_install
 
+    - name: Restart Home Assistant container
+      ansible.builtin.command: "docker compose -f {{ ha.base_path }}/docker-compose.yaml restart homeassistant"
+      when: hacs_install.changed
+
+  rescue:
+    - name: Rollback
+      ansible.builtin.command: "rm -rf {{ ha.config_path }}/custom_components/hacs"

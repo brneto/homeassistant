@@ -1,5 +1,9 @@
 ---
-username: "user"  # home dir username i.e. /home/user/
+ha:
+  base_path: "/opt/homeassistant"
+  config_path: "{{ ha.base_path }}/core/config"
+
+
 nic_name: "eth0"  # Host nic interface name
 dockernetwork_name: "dockervlan"
 docker_routing_interface_name: "dockerrouteif"
