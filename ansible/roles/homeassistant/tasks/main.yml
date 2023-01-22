@@ -43,7 +43,7 @@
         url: https://get.hacs.xyz
         return_content: yes
       register: hacs_installer
-      
+
     - name: Install HACS addon
       ansible.builtin.command:
         cmd: "bash -"
