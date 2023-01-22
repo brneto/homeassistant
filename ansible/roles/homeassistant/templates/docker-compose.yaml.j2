@@ -10,9 +10,9 @@ services:
       - BIND9_USER=bind
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /opt/homeassistant/bind/config:/etc/bind
-      - /opt/homeassistant/bind/cache:/var/cache/bind
-      - /opt/homeassistant/bind/records:/var/lib/bind
+      - {{ ha.base_path }}/bind/config:/etc/bind
+      - {{ ha.base_path }}/bind/cache:/var/cache/bind
+      - {{ ha.base_path }}/bind/records:/var/lib/bind
     networks:
       hass_net:
         ipv4_address: 172.18.0.2
@@ -37,8 +37,8 @@ services:
       - FTLCONF_LOCAL_IPV4="172.18.0.2"
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /opt/homeassistant/pihole:/etc/pihole
-      - /opt/homeassistant/dnsmasq:/etc/dnsmasq.d
+      - {{ ha.base_path }}/pihole:/etc/pihole
+      - {{ ha.base_path }}/dnsmasq:/etc/dnsmasq.d
     #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
     networks:
       hass_net:
@@ -89,7 +89,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
-      - /opt/homeassistant/portainer:/data
+      - {{ ha.base_path }}/portainer:/data
     networks:
       - hass_net
       
@@ -104,12 +104,12 @@ services:
     restart: unless-stopped
     hostname: duplicati
     environment:
-      - PUID={{ userid }}
+      - PUID={{ user.id }}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /opt/homeassistant/duplicati/config:/config
-      - /opt/homeassistant/duplicati/backups:/backups
-      - /opt/homeassistant:/source
+      - {{ ha.base_path }}/duplicati/config:/config
+      - {{ ha.base_path }}/duplicati/backups:/backups
+      - {{ ha.base_path }}:/source
     networks:
       - hass_net
 
@@ -124,7 +124,7 @@ services:
     restart: unless-stopped
     hostname: influxdb
     volumes:
-      - /opt/homeassistant/influxdb:/var/lib/influxdb
+      - {{ ha.base_path }}/influxdb:/var/lib/influxdb
     networks:
       - hass_net
     ports:
@@ -135,7 +135,7 @@ services:
     command:
       - --influxdb-url=http://localhost:8086
     volumes:
-      - /opt/homeassistant/chronograf:/var/lib/chronograf
+      - {{ ha.base_path }}/chronograf:/var/lib/chronograf
     restart: unless-stopped
     network_mode: service:influxdb
 
@@ -145,7 +145,7 @@ services:
     labels:
       - traefik.http.routers.grafana.rule=Host(`grafana.hass.lo`)
       - traefik.http.services.grafana.loadbalancer.server.port=3000
-    user: {{ userid }}
+    user: {{ user.id }}
     depends_on:
       - ingress
       - influxdb
@@ -158,7 +158,7 @@ services:
       - GF_AUTH_PROXY_ENABLED=true
       - GF_SECURITY_ALLOW_EMBEDDING=true
     volumes:
-      - /opt/homeassistant/grafana:/var/lib/grafana
+      - {{ ha.base_path }}/grafana:/var/lib/grafana
     networks:
       - hass_net
 
@@ -178,7 +178,7 @@ services:
       - MARIADB_PASSWORD={{ db.password }}
       - MARIADB_ROOT_PASSWORD={{ db.root_password }}
     volumes:
-      - /opt/homeassistant/mariadb:/var/lib/mysql
+      - {{ ha.base_path }}/mariadb:/var/lib/mysql
     networks: 
       - hass_net
     ports:
@@ -195,7 +195,7 @@ services:
     labels:
       - traefik.http.routers.homeassistant.rule=HostRegexp(`{subdomain:(?:www\.)?}hass.lo`)
       - traefik.http.services.homeassistant.loadbalancer.server.port=8123
-    user: {{ userid }}
+    user: {{ user.id }}
     privileged: true
     depends_on:
       - ingress

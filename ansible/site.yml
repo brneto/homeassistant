@@ -2,4 +2,7 @@
 - name: Deploy Home Assistant
   hosts: homeassistant
   roles:
-    - homeassistant
+    - role: homeassistant
+      vars:
+        user:
+          id: "501"

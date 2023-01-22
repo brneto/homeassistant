@@ -4,56 +4,44 @@
   ansible.builtin.template:
     src: docker-compose.yaml.j2
     dest: "{{ ha.base_path }}/docker-compose.yaml"
-    owner: "{{ userid }}"
+    owner: "{{ user.id }}"
     mode: '0644'
 
-- name: Start docker compose containers
+- name: Start Home Assistant containers
   ansible.builtin.command: "docker compose -f {{ ha.base_path }}/docker-compose.yaml up -d"
+  register: ha_started
+  changed_when: ha_started.rc == 0
 
 - name: Wait for directory to be created in container
   ansible.builtin.wait_for:
-    path: "{{ ha.config_path }}"
+    path: "{{ ha.config_path }}/.storage"
     state: present
-    timeout: 300
-    check_with: "ls {{ ha.config_path }}/.storage"
-  register: directory_exits
-
-- name: Debug output
-  ansible.builtin.debug:
-    var: directory_exists
-
-- name: Check if directory exists
-  ansible.builtin.assert:
-    that: directory_exists.stdout != ""
 
 - name: Template Home Assistant secrets
   ansible.builtin.template:
     src: secrets.yaml.j2
     dest: "{{ ha.config_path }}/secrets.yaml"
-    owner: "{{ userid }}"
+    owner: "{{ user.id }}"
     mode: '0644'
 
-- name: Copy initial config file for Home Assistant
+- name: Copy initial Home Assistant config file
   ansible.builtin.copy:
-    src: "{{ item }}"
+    src: configuration.yaml
     dest: "{{ ha.config_path }}"
-    owner: "{{ userid }}"
+    owner: "{{ user.id }}"
     mode: '0644'
-  loop:
-    - configuration.yaml
 
-- name: Install HACS addon and restart container
+- name: Try install HACS addon
   block:
     - name: Install HACS addon
-      ansible.builtin.command:
-        cmd: "cd /opt/homeassistant/config && wget -O - https://get.hacs.xyz | bash -"
+      ansible.builtin.shell:
+        cmd: wget -O - https://get.hacs.xyz | bash -
+        chdir: "{{ ha.config_path }}"
         creates: "{{ ha.config_path }}/custom_components/hacs"
-      register: hacs_install
-
-    - name: Restart Home Assistant container
-      ansible.builtin.command: "docker compose -f {{ ha.base_path }}/docker-compose.yaml restart homeassistant"
-      when: hacs_install.changed
-
+      notify:
+        - Restart Home Assistant
   rescue:
     - name: Rollback
-      ansible.builtin.command: "rm -rf {{ ha.config_path }}/custom_components/hacs"
+      ansible.builtin.file:
+        path: "{{ ha.config_path }}/custom_components/hacs"
+        state: absent

@@ -1,6 +1,11 @@
 ---
+user:
+  id: "1000"
 db:
   name: "homeassistant"
   user: "ha_db_usr"
   password: "ha_db_pwd"
   root_password: "ha_db_admin"
+ha:
+  base_path: "/opt/homeassistant"
+  config_path: "{{ ha.base_path }}/core/config"
