@@ -10,9 +10,9 @@ services:
       - BIND9_USER=bind
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./bind/config:/etc/bind
-      - ./bind/cache:/var/cache/bind
-      - ./bind/records:/var/lib/bind
+      - /opt/homeassistant/bind/config:/etc/bind
+      - /opt/homeassistant/bind/cache:/var/cache/bind
+      - /opt/homeassistant/bind/records:/var/lib/bind
     networks:
       hass_net:
         ipv4_address: 172.18.0.2
@@ -38,7 +38,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /opt/homeassistant/pihole:/etc/pihole
-      - ./dnsmasq:/etc/dnsmasq.d
+      - /opt/homeassistant/dnsmasq:/etc/dnsmasq.d
     #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
     networks:
       hass_net:
