@@ -1,16 +1,4 @@
----
-- name: Copy Bind9 config file
-  tags: dns, bind9
-  ansible.builtin.copy:
-    src: bind
-    dest: "{{ dns.bind_path }}"
-    owner: "{{ user.id }}"
-    mode: '0644'
-
-- name: Copy Dnsmasq config file
-  tags: dns, dnsmasq
-  ansible.builtin.copy:
-    src: dnsmasq
-    dest: "{{ dns.dnsmasq_path }}"
-    owner: "{{ user.id }}"
-    mode: '0644'
+- name: Install DNS server
+  tags: dns
+  ansible.builtin.import_tasks: service.yml
+  when: dns.service is defined

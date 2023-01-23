@@ -1,7 +1,6 @@
----
 - name: Check if Docker is already installed
   tags: docker
-  command: docker --version
+  ansible.builtin.command: docker --version
   register: docker_version
 
 - name: Install Docker
@@ -12,11 +11,12 @@
       - docker-ce-cli
       - containerd.io
     state: latest
+    update_only: true
   when: docker_version.rc != 0
 
 - name: Check if Docker Compose plugin is installed
   tags: docker, docker-compose
-  command: docker compose version
+  ansible.builtin.command: docker compose version
   register: compose_version
 
 - name: Install Docker Compose plugin
@@ -24,4 +24,5 @@
   ansible.builtin.package:
     name: docker-compose-plugin
     state: latest
+    update_only: true
   when: compose_version.rc != 0

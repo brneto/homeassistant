@@ -1,0 +1,23 @@
+- name: Download HACS installer
+  ansible.builtin.uri:
+    url: https://get.hacs.xyz
+    return_content: true
+  register: hacs_installer
+
+- name: Install HACS addon
+  tags: homeassistant, hacs
+  block:
+    - name: Execute HACS addon script
+      ansible.builtin.command:
+        cmd: "bash -"
+        stdin: "{{ hacs_installer.content }}"
+        chdir: "{{ ha.config_path }}"
+        creates: "{{ ha.config_path }}/custom_components/hacs"
+      failed_when: hacs_installer.content == ""
+      notify:
+        - Restart Home Assistant
+  rescue:
+    - name: Rollback HACS addon install
+      ansible.builtin.file:
+        path: "{{ ha.config_path }}/custom_components/hacs"
+        state: absent
