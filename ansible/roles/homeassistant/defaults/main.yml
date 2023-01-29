@@ -1,10 +1,13 @@
 user:
   id: "1000"
+network:
+  host_ip: "192.168.8.100"
 db:
   name: "homeassistant"
   user: "ha_db_usr"
   password: "ha_db_pwd"
   root_password: "ha_db_admin"
+  influxdb_password: "ha_db_pwd"
 ha:
   base_path: "/opt/homeassistant"
   config_path: "{{ ha.base_path }}/core/config"

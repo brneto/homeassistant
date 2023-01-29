@@ -2,7 +2,7 @@
   tags: docker-compose
   ansible.builtin.import_tasks: docker.yml
 
-- name: Template docker-compose file
+- name: Copy docker-compose file
   tags: docker-compose, homeassistant
   ansible.builtin.template:
     src: docker-compose.yaml.j2
