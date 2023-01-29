@@ -1,0 +1,9 @@
+- name: Deploy Home Assistant
+  hosts: ha_test
+  vars:
+    user:
+      id: "501"
+    dns:
+      service: "pihole"
+  roles:
+    - homeassistant
