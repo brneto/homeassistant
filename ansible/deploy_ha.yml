@@ -1,9 +1,9 @@
 - name: Deploy Home Assistant
+  check_mode: true
+  diff: true
   hosts: ha_test
   vars:
-    user:
-      id: "501"
-    dns:
-      service: "pihole"
+    user_id: "501"
+    dns_service: "pihole"
   roles:
     - homeassistant

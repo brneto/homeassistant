@@ -1,5 +1,5 @@
-user:
-  id: "1000"
+user_id: "1000"
+base_path: "/opt/homeassistant"
 network:
   host_ip: "192.168.8.100"
 db:
@@ -9,8 +9,7 @@ db:
   root_password: "ha_db_admin"
   influxdb_password: "ha_db_pwd"
 ha:
-  base_path: "/opt/homeassistant"
-  config_path: "{{ ha.base_path }}/core/config"
+  config_path: "{{ base_path }}/core/config"
 
 # https://github.com/sarunas-zilinskas/docker-compose-macvlan
 nic_name: "eth0"  # Host nic interface name

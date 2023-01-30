@@ -1,4 +1,4 @@
 - name: Restart Home Assistant
-  ansible.builtin.command: "docker compose -f {{ ha.base_path }}/docker-compose.yaml restart homeassistant"
+  ansible.builtin.command: "docker compose -f {{ base_path }}/docker-compose.yaml restart homeassistant"
   register: ha_restart
   changed_when: ha_restart.rc == 0

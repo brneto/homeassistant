@@ -1,18 +1,29 @@
-- name: Install Docker and Docker Compose
-  tags: docker-compose
-  ansible.builtin.import_tasks: docker.yml
+# ansible -i hosts.yml ha_test -m ansible.builtin.setup
+# - name: Print all available facts
+#   ansible.builtin.debug:
+#     var: ansible_facts
+
+- name: Install Docker and Docker Compose plugin
+  tags: docker, docker-compose
+  ansible.builtin.package:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
 
 - name: Copy docker-compose file
   tags: docker-compose, homeassistant
   ansible.builtin.template:
     src: docker-compose.yaml.j2
-    dest: "{{ ha.base_path }}/docker-compose.yaml"
-    owner: "{{ user.id }}"
-    mode: '0644'
+    dest: "{{ base_path }}/docker-compose.yaml"
+    owner: "{{ user_id }}"
+    mode: 0644
 
 - name: Start Home Assistant containers
   tags: docker-compose
-  ansible.builtin.command: "docker compose -f {{ ha.base_path }}/docker-compose.yaml up -d"
+  ansible.builtin.command: "docker compose -f {{ base_path }}/docker-compose.yaml up -d"
   register: ha_started
   changed_when: ha_started.rc == 0
 
@@ -27,16 +38,16 @@
   ansible.builtin.template:
     src: secrets.yaml.j2
     dest: "{{ ha.config_path }}/secrets.yaml"
-    owner: "{{ user.id }}"
-    mode: '0644'
+    owner: "{{ user_id }}"
+    mode: 0644
 
 - name: Copy initial Home Assistant config file
   tags: homeassistant
   ansible.builtin.copy:
     src: configuration.yaml
     dest: "{{ ha.config_path }}"
-    owner: "{{ user.id }}"
-    mode: '0644'
+    owner: "{{ user_id }}"
+    mode: 0644
 
 - name: Install HACS
   tags: homeassistant, hacs

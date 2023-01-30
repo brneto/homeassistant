@@ -1,4 +1,4 @@
 - name: Install DNS server
   tags: dns
   ansible.builtin.import_tasks: service.yml
-  when: dns.service is defined
+  when: dns_service is defined
